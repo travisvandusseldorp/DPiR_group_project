@@ -106,40 +106,37 @@ ggplot(data = number_players_drafted, aes_(x = number_players_drafted$Conference
 
 
 # Cameron: Working on the below
+#1 and 2
 qplot(Year, data = draft_results, geom = "bar", facets = . ~ Conference)
 qplot(Position, data = draft_results, geom = "bar", facets = . ~ Conference)
 
-# Grouped Bar Plot of Position Most Drafted by Year
+#3
+qplot(Year, Players_Drafted, data = ACC_Year, geom = "line", log = "y",
+      facets = ~ Position)
+
+#4
+ggplot(data = ACC_Year, aes_(y=ACC_Year$Players_Drafted, x=ACC_Year$Year, group=ACC_Year$Position)) +
+  geom_line(aes(color=ACC_Year$Position))
+
+
+# Grouped Bar Plot of Position Most Drafted by Year; needs work
 counts <- table(ACC_Year$Position, ACC_Year$Year)
 barplot(counts, main="Players Drafted by Position",
         xlab="Year Drafted", legend = rownames(counts))
 
-# Stacked Bar Plot with Colors and Legend
+# Stacked Bar Plot with Colors and Legend   ;needs work
 plot <- table(ACC_Year2$Players_Drafted, ACC_Year$Position)
 barplot(plot, main="Car Distribution by Gears and VS",
         xlab="Position", ylab="Players Drafted", col=c("darkgreen", "green", "lightgreen", "white"),
         legend = rownames(ACC_Year2$Position))
 
-
-#dot plot
-qplot(Year, Players_Drafted, data = ACC_Year, geom = "jitter", log = "y",
+# needs work
+qplot(Players_Drafted, data = ACC_Year, geom = "bar",
       facets = ~ Position)
 
-#1
-qplot(Players_Drafted, data = ACC, geom = "bar",
-      facets = ~ Position)
+qplot(Position, Players_Drafted, data = ACC_Year, geom = "smooth", facets = . ~ Year)
 
-p <- qplot(Year, data = ACC_Year, geom = "bar", facets = . ~ Conference, fill =
-             Conference)
-p <- p + scale_fill_brewer(name = "Conference of Draftpick")
-p
-
-#2
-ggplot(data = ACC_Year, aes_(y=ACC_Year$Players_Drafted, x=ACC_Year$Year, group=ACC_Year$Position)) +
-  geom_line(aes(color=ACC_Year$Position))
-
-
-#3
+#needs work
 qplot(Players_Drafted, Position,data = ACC_Year, geom = "bar")
 
 
