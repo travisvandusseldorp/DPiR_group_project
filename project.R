@@ -129,14 +129,14 @@ qplot(Year, Players_Drafted, data = ACC_Year, geom = "jitter", log = "y",
 qplot(Players_Drafted, data = ACC, geom = "bar",
       facets = ~ Position)
 
-p <- qplot(Year, data = ACC, geom = "bar", facets = . ~ Conference, fill =
+p <- qplot(Year, data = ACC_Year, geom = "bar", facets = . ~ Conference, fill =
              Conference)
 p <- p + scale_fill_brewer(name = "Conference of Draftpick")
 p
 
 #2
-ggplot(data = df2_Year, aes_(y=df2_Year$Players_Drafted, x=df2_Year$Year, group=df2_Year$Position)) +
-  geom_line(aes(color=df2_Year$Position))
+ggplot(data = ACC_Year, aes_(y=ACC_Year$Players_Drafted, x=ACC_Year$Year, group=ACC_Year$Position)) +
+  geom_line(aes(color=ACC_Year$Position))
 
 
 #3
