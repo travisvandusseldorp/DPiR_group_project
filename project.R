@@ -8,6 +8,8 @@ library(dplyr)
 library(rvest)
 library(ggplot2)
 library(scales)
+library(tidyverse)
+library(forcats)
 
 # Dataframe containing conferences as column names and schools as the data, used to add the conferenceerence to the player, 
 # NA's added so all columns have equal rows
@@ -57,7 +59,6 @@ conferences <- list("SEC", "Big_Ten", "SEC", "Pac_12", "ACC", "Big_12")
 lapply(conferences, add_conferences)
 print(draft_results$Position)
 
-
 # Group and overwrite offensive and defensive line positions to "OL" and "DL"
 draft_results$Position[draft_results$Position == "C" | draft_results$Position == "G" | draft_results$Position == "T"] <- "OL"
 draft_results$Position[draft_results$Position == "DT" | draft_results$Position == "DE" | draft_results$Position == "NT"] <- "DL" 
@@ -73,8 +74,9 @@ ACC <- ACC[order(-ACC$Players_Drafted),]
 
 # Group by specific conference (ACC) and position, return with total players drafted by year
 ACC_Year <- draft_results %>% group_by(Conference = "ACC", Position, Year) %>% summarize(Players_Drafted = n())
-ACC_Year2 <- ACC_Year
-ACC_Year2 <- ACC_Year2[order(-ACC_Year2$Players_Drafted),]
+
+# Group by specific conference (ACC) and position, return with total players drafted by year
+Overall_ACC <- draft_results %>% group_by(Conference = "ACC", Team, Year,) %>% summarize(Players_Drafted = n())
 
 # Function to return the ranking in descending order of players draft at a postion by conference
 most_drafted_at_position <- function(x) { df2 %>% filter(Position == x) %>% arrange(desc(Players_Drafted)) }
@@ -104,41 +106,76 @@ ggplot(data = number_players_drafted, aes_(x = number_players_drafted$Conference
 
 
 
+# Cameron:  Need to delete subset "Other" out.
 
-# Cameron: Working on the below
-#1 and 2
-qplot(Year, data = draft_results, geom = "bar", facets = . ~ Conference)
-qplot(Position, data = draft_results, geom = "bar", facets = . ~ Conference)
+#1: Players Drafted by Year; showing all conferences.  This is my first plot.  Need to update title font.
+c <- qplot(Year, data = draft_results, geom = "bar", facets = . ~ Conference)
+c <- c + theme_minimal() + theme(axis.text.x = element_text(size = 6), axis.text.y = element_text(size = 12, face="bold"), title=element_text(size=14,face="bold"))
+c <- c + labs(x = "Year", title = "Players Drafted by Year")
+c <- c + theme(plot.title = element_text(hjust = 0.5))
+c
+ggsave('Players_Drafted_by_Year.png')
 
-#3
-qplot(Year, Players_Drafted, data = ACC_Year, geom = "line", log = "y",
-      facets = ~ Position)
+#2: Change in data over year by position. Will be on same slide as plot #1.
+d <- ggplot(data = ACC_Year, aes_(x=ACC_Year$Year, y=ACC_Year$Players_Drafted, group=ACC_Year$Position)) +
+  geom_line(aes(color=ACC_Year$Position)) + geom_point(aes(color=ACC_Year$Position))
+d <- d + theme_minimal()
+d
+ggsave('Change_in_Position_by_Year.png')
 
-#4
-ggplot(data = ACC_Year, aes_(y=ACC_Year$Players_Drafted, x=ACC_Year$Year, group=ACC_Year$Position)) +
-  geom_line(aes(color=ACC_Year$Position))
+#3: Position Most Drafted in ACC
+acc <- draft_results %>% filter(Conference == 'ACC')
+p <- acc %>% count(Position) %>%
+  mutate(Position = fct_reorder(Position, n, .desc = TRUE)) %>%
+  ggplot(aes(x = Position, y = n)) + geom_bar(stat = 'identity', aes(fill = Position), show.legend = FALSE)
+p <- p + theme_minimal() + theme(axis.text.x = element_text(size = 13, face="bold"), axis.text.y = element_text(size = 13, face="bold"), title=element_text(size=18,face="bold"))
+p <- p + scale_fill_viridis_d(direction = 1)
+p <- p + labs(title = "Positions Most Drafted in ACC", x = "", y = "")
+p <- p + theme(plot.title = element_text(hjust = 0.5))
+p
+ggsave('ACC_players_by_position.png')
 
 
-# Grouped Bar Plot of Position Most Drafted by Year; needs work
-counts <- table(ACC_Year$Position, ACC_Year$Year)
-barplot(counts, main="Players Drafted by Position",
-        xlab="Year Drafted", legend = rownames(counts))
+#4: College Most Drafted in ACC
+p1 <- acc %>% count(College) %>%
+  mutate(College = fct_reorder(College, n, .desc = TRUE)) %>% top_n(5) %>% 
+  ggplot(aes(x = College, y = n)) + geom_bar(stat = 'identity', aes(fill = College), show.legend = FALSE)
+p1 <- p1 + theme_minimal() + theme(axis.text.x = element_text(size = 13, face="bold"), axis.text.y = element_text(size = 13, face="bold"), title=element_text(size=16,face="bold"))
+p1 <- p1 + scale_fill_viridis_d(direction = 1)
+p1 <- p1 + labs(title = "Colleges Most Drafted in ACC", x = "", y = "")
+p1 <- p1 + theme(plot.title = element_text(hjust = 0.5))
+p1
+ggsave('ACC_players_Drafted_by_College_Attended.png')
 
-# Stacked Bar Plot with Colors and Legend   ;needs work
-plot <- table(ACC_Year2$Players_Drafted, ACC_Year$Position)
-barplot(plot, main="Car Distribution by Gears and VS",
-        xlab="Position", ylab="Players Drafted", col=c("darkgreen", "green", "lightgreen", "white"),
-        legend = rownames(ACC_Year2$Position))
 
-# needs work
-qplot(Players_Drafted, data = ACC_Year, geom = "bar",
-      facets = ~ Position)
+#5: Teams to most likely draft Players out of ACC
+acc <- draft_results %>% filter(Conference == 'ACC')
+p2 <- acc %>% count(Team) %>%
+  mutate(Team = fct_reorder(Team, n, .desc = TRUE)) %>% top_n(5) %>% 
+  ggplot(aes(x = Team, y = n)) + geom_bar(stat = 'identity', aes(fill = Team), show.legend = FALSE)
+p2 <- p2 + theme_minimal() + theme(axis.text.x = element_text(size = 12, face="bold"), axis.text.y = element_text(size = 12, face="bold"), title=element_text(size=14,face="bold"))
+p2 <- p2 + scale_fill_viridis_d(direction = 1)
+p2 <- p2 + labs(title = "Teams Most Likely to Draft an ACC Player", x = "", y = "")
+p2 <- p2 + theme(plot.title = element_text(hjust = 0.5))
+p2
+ggsave('ACC_players_by_Teams.png')
 
-qplot(Position, Players_Drafted, data = ACC_Year, geom = "smooth", facets = . ~ Year)
 
-#needs work
-qplot(Players_Drafted, Position,data = ACC_Year, geom = "bar")
 
+
+
+# Messing around with this
+ggplot(data = Overall_ACC, aes_(x=Overall_ACC$Year, y=Overall_ACC$Players_Drafted, group=Overall_ACC$Team)) +
+  geom_line(aes(color=Overall_ACC$Team)) +
+  geom_point(aes(color=Overall_ACC$Team))
+
+
+# Messing around with this
+ggplot(data=Overall_ACC, aes_(x=Overall_ACC$Year, y=Overall_ACC$Players_Drafted, group=Overall_ACC$Team)) +
+  geom_bar(stat="identity", position=position_dodge())
+
+
+ 
 
 
 
